@@ -46,6 +46,7 @@ class CaseInsensitiveDict(dict):
                 return 'plaidVersion'
             if normalized == 'secret':
                 return 'secret'
+            return normalized
         return key
 
     def __getitem__(self, key):
@@ -66,8 +67,14 @@ class CaseInsensitiveDict(dict):
     def pop(self, key, default=None):
         return super().pop(self._normalize_key(key), default)
 
+    def setdefault(self, key, default=None):
+        return super().setdefault(self._normalize_key(key), default)
+
+    def copy(self):
+        return CaseInsensitiveDict(self)
+
     def update(self, other=None, **kwargs):
-        if other:
+        if other is not None:
             if hasattr(other, 'keys'):
                 for k in other.keys():
                     self[k] = other[k]
@@ -197,7 +204,6 @@ conf = plaid.Configuration(
         client_id_val = kwargs.get('client_id', kwargs.get('clientId', kwargs.get('CLIENT_ID', kwargs.get('clientid'))))
         if client_id_val is not None:
             self.api_key['clientId'] = client_id_val
-            self.api_key['client_id'] = client_id_val
 
         secret_val = kwargs.get('secret', kwargs.get('SECRET'))
         if secret_val is not None:
@@ -206,7 +212,6 @@ conf = plaid.Configuration(
         plaid_version_val = kwargs.get('plaid_version', kwargs.get('plaidVersion', kwargs.get('PLAID_VERSION', kwargs.get('plaidversion'))))
         if plaid_version_val is not None:
             self.api_key['plaidVersion'] = plaid_version_val
-            self.api_key['plaid_version'] = plaid_version_val
 
         # Process plaid environment parameter
         plaid_env_val = kwargs.get('environment', kwargs.get('plaid_env', kwargs.get('plaidEnv', kwargs.get('PLAID_ENV'))))
@@ -490,35 +495,14 @@ conf = plaid.Configuration(
         if self.refresh_api_key_hook is not None:
             self.refresh_api_key_hook(self)
 
-        # Look up key case/separator-insensitively
-        key = None
-        if isinstance(identifier, str):
-            norm_id = identifier.lower().replace('_', '').replace('-', '')
-            for k, v in self.api_key.items():
-                if isinstance(k, str) and k.lower().replace('_', '').replace('-', '') == norm_id:
-                    key = v
-                    break
-
-        if key is None and alias is not None and isinstance(alias, str):
-            norm_alias = alias.lower().replace('_', '').replace('-', '')
-            for k, v in self.api_key.items():
-                if isinstance(k, str) and k.lower().replace('_', '').replace('-', '') == norm_alias:
-                    key = v
-                    break
-
-        if key is None:
-            key = self.api_key.get(identifier, self.api_key.get(alias) if alias is not None else None)
+        key = self.api_key.get(identifier)
+        if key is None and alias is not None:
+            key = self.api_key.get(alias)
 
         if key:
-            prefix = None
-            if isinstance(identifier, str):
-                norm_id = identifier.lower().replace('_', '').replace('-', '')
-                for pk, pv in self.api_key_prefix.items():
-                    if isinstance(pk, str) and pk.lower().replace('_', '').replace('-', '') == norm_id:
-                        prefix = pv
-                        break
-            if prefix is None:
-                prefix = self.api_key_prefix.get(identifier)
+            prefix = self.api_key_prefix.get(identifier)
+            if prefix is None and alias is not None:
+                prefix = self.api_key_prefix.get(alias)
 
             if prefix:
                 return "%s %s" % (prefix, key)
@@ -547,22 +531,7 @@ conf = plaid.Configuration(
         """
         auth = {}
 
-        # Case-insensitive/separator-insensitive checks for keys
-        has_client_id = False
-        has_plaid_version = False
-        has_secret = False
-
-        for k in self.api_key:
-            if isinstance(k, str):
-                normalized = k.lower().replace('_', '').replace('-', '')
-                if normalized == 'clientid':
-                    has_client_id = True
-                elif normalized == 'plaidversion':
-                    has_plaid_version = True
-                elif normalized == 'secret':
-                    has_secret = True
-
-        if has_client_id:
+        if 'clientId' in self.api_key:
             auth['clientId'] = {
                 'type': 'api_key',
                 'in': 'header',
@@ -578,7 +547,7 @@ conf = plaid.Configuration(
                 'key': 'Authorization',
                 'value': 'Bearer ' + self.access_token
             }
-        if has_plaid_version:
+        if 'plaidVersion' in self.api_key:
             auth['plaidVersion'] = {
                 'type': 'api_key',
                 'in': 'header',
@@ -587,7 +556,7 @@ conf = plaid.Configuration(
                     'plaidVersion',
                 ),
             }
-        if has_secret:
+        if 'secret' in self.api_key:
             auth['secret'] = {
                 'type': 'api_key',
                 'in': 'header',

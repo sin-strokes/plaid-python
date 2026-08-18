@@ -64,3 +64,23 @@ def test_plaid_configuration_direct_property_assign():
     config.api_key['client_id'] = 'modified-client-id'
     assert config.get_api_key_with_prefix('clientId') == 'modified-client-id'
     assert config.get_api_key_with_prefix('client_id') == 'modified-client-id'
+
+def test_plaid_configuration_arbitrary_keys():
+    config = plaid.Configuration()
+    config.api_key['custom_auth_key'] = 'some-token'
+    assert config.api_key['custom_auth_key'] == 'some-token'
+    assert config.api_key['CUSTOM_AUTH_KEY'] == 'some-token'
+    assert config.api_key['customauthkey'] == 'some-token'
+    assert config.api_key['custom-auth-key'] == 'some-token'
+
+    # Test update and setdefault and copy
+    config.api_key.update({'another_key': 'val'})
+    assert config.api_key['anotherkey'] == 'val'
+
+    config.api_key.setdefault('yet_another_key', 'val2')
+    assert config.api_key['yetanotherkey'] == 'val2'
+
+    copied = config.api_key.copy()
+    assert copied['anotherkey'] == 'val'
+    assert isinstance(copied, plaid.configuration.CaseInsensitiveDict)
+
