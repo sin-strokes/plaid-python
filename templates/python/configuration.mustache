@@ -14,9 +14,9 @@ from {{packageName}}.exceptions import ApiValueError
 
 {{! Modified by Plaid }}
 class Environment:
-{{#servers}}
-    {{{description}}} = "{{{url}}}"
-{{/servers}}
+    Production = "https://production.plaid.com"
+    Development = "https://development.plaid.com"
+    Sandbox = "https://sandbox.plaid.com"
 
 
 JSON_SCHEMA_VALIDATION_KEYWORDS = {
@@ -556,33 +556,18 @@ conf = {{{packageName}}}.Configuration(
         :return: An array of host settings
         """
         return [
-            {{#servers}}
             {
-                'url': "{{{url}}}",
-                'description': "{{{description}}}{{^description}}No description provided{{/description}}",
-                {{#variables}}
-                {{#-first}}
-                'variables': {
-                {{/-first}}
-                    '{{{name}}}': {
-                        'description': "{{{description}}}{{^description}}No description provided{{/description}}",
-                        'default_value': "{{{defaultValue}}}",
-                        {{#enumValues}}
-                        {{#-first}}
-                        'enum_values': [
-                        {{/-first}}
-                            "{{{.}}}"{{^-last}},{{/-last}}
-                        {{#-last}}
-                        ]
-                        {{/-last}}
-                        {{/enumValues}}
-                    }{{^-last}},{{/-last}}
-                {{#-last}}
-                }
-                {{/-last}}
-                {{/variables}}
-            }{{^-last}},{{/-last}}
-            {{/servers}}
+                'url': "https://production.plaid.com",
+                'description': "Production",
+            },
+            {
+                'url': "https://development.plaid.com",
+                'description': "Development",
+            },
+            {
+                'url': "https://sandbox.plaid.com",
+                'description': "Sandbox",
+            }
         ]
 
     def get_host_from_settings(self, index, variables=None, servers=None):
