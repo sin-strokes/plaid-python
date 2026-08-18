@@ -20,6 +20,7 @@ from plaid.exceptions import ApiValueError
 
 class Environment:
     Production = "https://production.plaid.com"
+    Development = "https://development.plaid.com"
     Sandbox = "https://sandbox.plaid.com"
 
 
@@ -451,6 +452,10 @@ conf = plaid.Configuration(
             {
                 'url': "https://production.plaid.com",
                 'description': "Production",
+            },
+            {
+                'url': "https://development.plaid.com",
+                'description': "Development",
             },
             {
                 'url': "https://sandbox.plaid.com",
