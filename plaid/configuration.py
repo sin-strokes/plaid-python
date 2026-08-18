@@ -448,6 +448,8 @@ conf = plaid.Configuration(
 
         :return: An array of host settings
         """
+        # Modified by Plaid: Hardcode environments to always include the Development environment which was removed from the OpenAPI spec
+        # Modified by Plaid: Hardcode environments to always include the Development environment which was removed from the OpenAPI spec
         return [
             {
                 'url': "https://production.plaid.com",
